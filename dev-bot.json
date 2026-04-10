@@ -1,0 +1,203 @@
+{
+  "name": "dev-bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "github-webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cb577836-d0bc-4b13-b58a-8aecd1299463",
+      "name": "Webhook",
+      "webhookId": "b50ad764-2c45-4ea6-9b07-0c1d5b0a39d4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "767d4056-6336-4d79-b49c-ddbbe3485b3e",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "opened",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "55fefafa-6d48-4b2b-9f62-29d20bb1cfc5",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "synchronize",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "900447de-a49c-4ff6-b53b-34c7350ce1ba",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.pull_request.diff_url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        400,
+        -96
+      ],
+      "id": "a5f8db53-dc50-4a88-b30a-795821670685",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert Lead Software Developer. Review the following code diff.\n1. Check for logical bugs or bad practices.\n2. Suggest optimizations or cleaner syntax.\n3. Provide a constructive, professional review in Markdown.\n\nCode Diff: {{ $json.data }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        -96
+      ],
+      "id": "a75d578a-a204-482a-ba86-ccd52b9e2d4a",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "vAwNrNoNMqBBVL3C",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "value": "mdshafiulalamsagar",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "farm-vet-project",
+          "mode": "list",
+          "cachedResultName": "farm-vet-project",
+          "cachedResultUrl": "https://github.com/mdshafiulalamsagar/farm-vet-project"
+        },
+        "issueNumber": "={{ $('Webhook').item.json.body.pull_request.number }}",
+        "body": "={{ $json.content.parts[0].text }}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        944,
+        -96
+      ],
+      "id": "878bc9d4-06b9-483a-942d-8d9ae0a894c2",
+      "name": "Create a comment on an issue",
+      "webhookId": "6cb24f78-a2b6-43b3-9cbb-6656aa25b590",
+      "credentials": {
+        "githubApi": {
+          "id": "8fjKSFvQtlWg3Kez",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create a comment on an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a42777a7-7045-49de-9c13-a3363eb027ac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "739a253701041fa11ee0c10adbc9477c3bc71cbdc82797fa8b4410caf14f4322"
+  },
+  "id": "BzJKUDU8cJydSWOX",
+  "tags": []
+}
